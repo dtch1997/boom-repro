@@ -13,7 +13,7 @@ Boom Act", …). This repo checks it cleanly over many independent runs.
 collapse from a ~500–740-char first reply to a median of **2 characters** by the
 end. No worldbuilding in any run. Write-up + figure: [`BLOGPOST.md`](BLOGPOST.md).
 
-![response length collapses](figures/response_length.png)
+![response length collapses](figures/response_length.png?v=2)
 
 ## Run it
 

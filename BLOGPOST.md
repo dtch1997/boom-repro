@@ -28,7 +28,7 @@ refusals, no errors).
 
 ## Result
 
-![Response length collapses under repeated "boom"](figures/response_length.png)
+![Response length collapses under repeated "boom"](figures/response_length.png?v=2)
 
 Response length is the clearest signal, and it points down, not up:
 
