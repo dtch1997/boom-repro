@@ -3,3 +3,9 @@ runs/
 __pycache__/
 *.pyc
 .DS_Store
+*.log
+# Bulky per-run transcripts + full jsonls live in GCS (see reports/speak.md).
+# Keep only the lean lengths.jsonl needed to rebuild the figures.
+results/speak/run_*/
+results/speak/trajectories.jsonl
+results/speak/all_trajectories.jsonl

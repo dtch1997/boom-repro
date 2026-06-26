@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>boom-repro · SPEAK transcripts</title>
+<style>
+  :root {
+    --bg:#0f1115; --panel:#171a21; --edge:#262b36; --fg:#e7e9ee; --mut:#9aa3b2;
+    --accent:#6ea8fe; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--fg); height:100vh; display:flex; overflow:hidden; }
+  /* sidebar */
+  #side { width:340px; flex:none; border-right:1px solid var(--edge); display:flex;
+          flex-direction:column; background:var(--panel); }
+  #side header { padding:12px 14px; border-bottom:1px solid var(--edge); }
+  #side h1 { font-size:14px; margin:0 0 8px; }
+  #side .ctl { display:flex; gap:6px; flex-wrap:wrap; }
+  select, input { background:var(--bg); color:var(--fg); border:1px solid var(--edge);
+                  border-radius:6px; padding:5px 7px; font-size:12px; }
+  #list { overflow-y:auto; flex:1; }
+  .item { padding:9px 14px; border-bottom:1px solid var(--edge); cursor:pointer; }
+  .item:hover { background:#1d212b; }
+  .item.sel { background:#222838; border-left:3px solid var(--accent); padding-left:11px; }
+  .item .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .item .rid { font-family:var(--mono); font-weight:600; }
+  .item .ol { color:var(--mut); font-size:12px; margin-top:2px;
+              overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .badge { font-size:10.5px; padding:1.5px 6px; border-radius:10px; font-weight:600; white-space:nowrap; }
+  .b-completed { background:#16361f; color:#7fdca0; }
+  .b-content_filtered { background:#3a1d1d; color:#f0a0a0; }
+  .b-refusal { background:#3a3320; color:#e6cd7a; }
+  .b-error { background:#332033; color:#d59ad5; }
+  .iscore { font-family:var(--mono); font-size:12px; color:var(--accent); }
+  /* main */
+  #main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  #meta { border-bottom:1px solid var(--edge); padding:14px 18px; background:var(--panel); }
+  #meta .h { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  #meta .h .rid { font-family:var(--mono); font-size:18px; font-weight:700; }
+  #meta .stats { color:var(--mut); font-size:12.5px; margin:6px 0 10px; font-family:var(--mono); }
+  #meta .summary { margin:8px 0 12px; max-width:80ch; }
+  #scores { display:flex; gap:18px; flex-wrap:wrap; }
+  .score { min-width:128px; }
+  .score .lab { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.04em;
+                display:flex; justify-content:space-between; }
+  .score .lab b { color:var(--fg); font-family:var(--mono); }
+  .bar { height:6px; background:var(--edge); border-radius:4px; margin-top:3px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:var(--accent); }
+  /* transcript */
+  #scroll { overflow-y:auto; flex:1; padding:16px 18px 60px; }
+  .turn { margin:0 0 12px; border:1px solid var(--edge); border-radius:8px; overflow:hidden; }
+  .turn .hd { padding:5px 10px; font-family:var(--mono); font-size:11.5px; color:var(--mut);
+              background:#12151c; border-bottom:1px solid var(--edge); }
+  .turn .bd { padding:9px 12px; white-space:pre-wrap; word-break:break-word; font-size:13px; }
+  .turn.user .hd { color:#8fd0ff; }
+  .turn.user .bd { color:#cfe6ff; }
+  .empty { color:var(--mut); padding:24px; }
+</style>
+</head>
+<body>
+  <aside id="side">
+    <header>
+      <h1>boom-repro · SPEAK transcripts</h1>
+      <div class="ctl">
+        <select id="sort" title="sort by">
+          <option value="interestingness">sort: interestingness ↓</option>
+          <option value="escalation">sort: escalation ↓</option>
+          <option value="creativity">sort: creativity ↓</option>
+          <option value="coherence">sort: coherence ↓</option>
+          <option value="peak_chars">sort: peak chars ↓</option>
+          <option value="n_turns">sort: turns ↓</option>
+          <option value="run_id">sort: run id ↑</option>
+        </select>
+        <select id="filt" title="filter outcome">
+          <option value="">all outcomes</option>
+          <option value="completed">completed</option>
+          <option value="content_filtered">content_filtered</option>
+          <option value="refusal">refusal</option>
+          <option value="error">error</option>
+        </select>
+      </div>
+    </header>
+    <div id="list"><div class="empty">loading…</div></div>
+  </aside>
+  <section id="main">
+    <div id="meta"><div class="empty">loading data.json.gz …</div></div>
+    <div id="scroll"></div>
+  </section>
+
+<script>
+const SCORES = ["interestingness","escalation","creativity","coherence"];
+let DATA = [], cur = null;
+const $ = s => document.querySelector(s);
+
+async function load() {
+  const res = await fetch("data.json.gz");
+  if (!res.ok) throw new Error("data.json.gz not found (serve this directory over HTTP)");
+  const buf = await res.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let text;
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    // still gzip-compressed → decompress in-browser (works on any static server)
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"));
+    text = await new Response(stream).text();
+  } else {
+    // server already decompressed it (Content-Encoding: gzip) → plain JSON
+    text = new TextDecoder().decode(buf);
+  }
+  DATA = JSON.parse(text);
+  render();
+}
+
+function sorted() {
+  const key = $("#sort").value, filt = $("#filt").value;
+  let rows = DATA.filter(d => !filt || d.outcome === filt);
+  const val = d => key === "run_id" ? d.run_id
+                 : (SCORES.includes(key) ? (d.scores[key] ?? -1) : d[key]);
+  rows.sort((a,b) => key === "run_id" ? val(a).localeCompare(val(b)) : val(b) - val(a));
+  return rows;
+}
+
+function render() {
+  const rows = sorted(), list = $("#list");
+  list.innerHTML = "";
+  if (!rows.length) { list.innerHTML = `<div class="empty">no runs match.</div>`; return; }
+  for (const d of rows) {
+    const el = document.createElement("div");
+    el.className = "item" + (cur && cur.run_id === d.run_id ? " sel" : "");
+    el.innerHTML =
+      `<div class="top"><span class="rid">${d.run_id}</span>
+        <span><span class="iscore">i${d.scores.interestingness ?? "?"}</span>
+        &nbsp;<span class="badge b-${d.outcome}">${d.outcome}</span></span></div>
+       <div class="ol">${esc(d.one_liner || d.summary || "")}</div>`;
+    el.onclick = () => { cur = d; render(); showMeta(d); showTranscript(d); };
+    list.appendChild(el);
+  }
+  if (!cur) { cur = rows[0]; showMeta(cur); showTranscript(cur); render(); }
+}
+
+function showMeta(d) {
+  const sc = SCORES.map(k => {
+    const v = d.scores[k], pct = v == null ? 0 : v * 10;
+    return `<div class="score"><div class="lab">${k}<b>${v ?? "—"}/10</b></div>
+            <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+  $("#meta").innerHTML =
+    `<div class="h"><span class="rid">${d.run_id}</span>
+       <span class="badge b-${d.outcome}">${d.outcome}</span>
+       <span style="color:var(--mut)">${esc(d.one_liner||"")}</span></div>
+     <div class="stats">model ${esc(d.model||"?")} · ${d.n_turns} turns ·
+       chars first ${d.first_chars} → peak ${d.peak_chars} → last ${d.last_chars}</div>
+     <div class="summary">${esc(d.summary||"")}</div>
+     <div id="scores">${sc}</div>`;
+}
+
+function showTranscript(d) {
+  const s = $("#scroll");
+  s.innerHTML = d.turns.map(t => {
+    const hd = t.role === "user"
+      ? `[turn ${t.step}] USER`
+      : `[turn ${t.step}] ASSISTANT · ${t.chars} chars · ${t.stop_reason}`;
+    return `<div class="turn ${t.role}"><div class="hd">${esc(hd)}</div>
+            <div class="bd">${esc(t.text)}</div></div>`;
+  }).join("");
+  s.scrollTop = 0;
+}
+
+function esc(x){ return String(x).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+$("#sort").onchange = () => render();
+$("#filt").onchange = () => { cur = null; render(); };
+load().catch(e => { $("#meta").innerHTML = `<div class="empty">failed: ${esc(e.message)}</div>`; });
+</script>
+</body>
+</html>
