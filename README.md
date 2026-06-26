@@ -24,6 +24,13 @@ for real — so hard that **22/100 runs trip the output content filter**. Write-
 
 ![SPEAK escalates](reports/figs/speak_response_length.png)
 
+**Read the transcripts.** [`site/`](site/) is a tiny static browser for all 100
+SPEAK runs — sidebar of runs, a top panel with metadata + a short AI summary +
+1–10 judge scores (interestingness / escalation / creativity / coherence), and
+the full transcript below. Serve it with `make site-serve` (then open
+http://127.0.0.1:8000). Regenerate the judged data with `make site` (needs
+`ANTHROPIC_API_KEY`); `site/scores.jsonl` is the lean, diffable per-run record.
+
 ## Run it
 
 ```bash

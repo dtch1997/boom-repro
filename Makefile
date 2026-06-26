@@ -1,4 +1,4 @@
-.PHONY: setup run figure speak speak-figures
+.PHONY: setup run figure speak speak-figures site site-serve
 
 # Lightweight env: anthropic + matplotlib. Add the live dashboard with
 #   uv pip install --python .venv -e ../stagehand
@@ -32,3 +32,15 @@ results/speak/lengths.jsonl:
 speak-figures: results/speak/lengths.jsonl
 	.venv/bin/python boom/make_figure.py results/speak/lengths.jsonl reports/figs/speak_response_length.png
 	.venv/bin/python boom/make_attrition.py results/speak/lengths.jsonl reports/figs/speak_attrition.png
+
+# Static transcript site (committed under site/). `make site` judges each run
+# (needs ANTHROPIC_API_KEY) and writes site/data.json.gz + site/scores.jsonl;
+# `make site-serve` serves it locally (any static server works — the gzip payload
+# is decompressed in the browser). Rebuild the payload from committed scores with
+# `SKIP_JUDGE=1 .venv/bin/python boom/build_site.py`.
+site:
+	.venv/bin/python boom/build_site.py
+
+site-serve:
+	@echo "serving http://127.0.0.1:8000  (Ctrl-C to stop)"
+	.venv/bin/python -m http.server 8000 --bind 127.0.0.1 --directory site
