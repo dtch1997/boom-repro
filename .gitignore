@@ -9,3 +9,7 @@ __pycache__/
 results/speak/run_*/
 results/speak/trajectories.jsonl
 results/speak/all_trajectories.jsonl
+# Per-model sweeps (results/speak-<slug>/): keep only lean lengths.jsonl.
+results/speak-*/run_*/
+results/speak-*/trajectories.jsonl
+results/speak-*/all_trajectories.jsonl

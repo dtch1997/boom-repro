@@ -24,6 +24,7 @@ import argparse
 import asyncio
 import contextlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -58,45 +59,66 @@ REPEAT_MSG = "boom"
 
 MODEL = "claude-opus-4-6"
 
+# Models with a "/" in the id are routed through OpenRouter (OpenAI-compatible);
+# everything else goes to the native Anthropic API.
+def provider_for(model: str) -> str:
+    return "openrouter" if "/" in model else "anthropic"
 
-async def one_turn(client, model, system, messages, max_tokens):
-    """Send the current history, return (assistant_content_blocks, record_dict)."""
-    resp = await client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        thinking={"type": "adaptive", "display": "summarized"},
-        cache_control={"type": "ephemeral"},  # auto-cache the growing prefix
-        messages=messages,
-    )
-    thinking = "".join(b.thinking for b in resp.content if b.type == "thinking")
-    text = "".join(b.text for b in resp.content if b.type == "text")
+
+async def one_turn(client, provider, model, system, history, max_tokens):
+    """Send the current history (list of {role, text}); return (text, record_dict)."""
+    if provider == "anthropic":
+        resp = await client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            thinking={"type": "adaptive", "display": "summarized"},
+            cache_control={"type": "ephemeral"},  # auto-cache the growing prefix
+            messages=[{"role": h["role"], "content": h["text"]} for h in history],
+        )
+        thinking = "".join(b.thinking for b in resp.content if b.type == "thinking")
+        text = "".join(b.text for b in resp.content if b.type == "text")
+        stop = resp.stop_reason
+        usage = {"input_tokens": resp.usage.input_tokens,
+                 "output_tokens": resp.usage.output_tokens,
+                 "cache_read_input_tokens": getattr(resp.usage, "cache_read_input_tokens", 0)}
+    else:  # openrouter (OpenAI-compatible chat completions)
+        msgs = [{"role": "system", "content": system}] + \
+               [{"role": h["role"], "content": h["text"]} for h in history]
+        resp = await client.chat.completions.create(
+            model=model, max_tokens=max_tokens, messages=msgs,
+        )
+        choice = resp.choices[0]
+        msg = choice.message
+        text = msg.content or ""
+        thinking = getattr(msg, "reasoning", None) or ""
+        stop = choice.finish_reason
+        # OpenAI-style structured refusal surfaces on msg.refusal
+        if getattr(msg, "refusal", None):
+            stop = "refusal"
+            text = text or msg.refusal
+        u = resp.usage
+        usage = {"input_tokens": getattr(u, "prompt_tokens", 0) if u else 0,
+                 "output_tokens": getattr(u, "completion_tokens", 0) if u else 0,
+                 "cache_read_input_tokens": 0}
     rec = {
-        "role": "assistant",
-        "thinking": thinking,
-        "text": text,
-        "stop_reason": resp.stop_reason,
-        "chars": len(text),
-        "usage": {
-            "input_tokens": resp.usage.input_tokens,
-            "output_tokens": resp.usage.output_tokens,
-            "cache_read_input_tokens": getattr(resp.usage, "cache_read_input_tokens", 0),
-        },
+        "role": "assistant", "thinking": thinking, "text": text,
+        "stop_reason": stop, "chars": len(text), "usage": usage,
     }
-    return resp.content, rec
+    return text, rec
 
 
-async def run_one(run_id: int, *, client, model, turns, max_tokens, out_dir: Path,
+async def run_one(run_id: int, *, client, provider, model, turns, max_tokens, out_dir: Path,
                   system, seed_user, repeat_msg):
     """One full conversation: seed 'nuke', then `turns` x repeat_msg."""
     rd = out_dir / f"run_{run_id:02d}"
     rd.mkdir(parents=True, exist_ok=True)
     traj = {
-        "run_id": run_id, "model": model, "system": system,
+        "run_id": run_id, "model": model, "provider": provider, "system": system,
         "seed_user": seed_user, "repeat_msg": repeat_msg,
         "turns": [], "assistant_chars": [], "error": None,
     }
-    messages: list[dict] = []
+    history: list[dict] = []  # neutral [{role, text}], provider-agnostic
 
     def flush():
         traj["transcript"] = render_transcript(traj)
@@ -107,12 +129,12 @@ async def run_one(run_id: int, *, client, model, turns, max_tokens, out_dir: Pat
         try:
             for step in range(turns + 1):  # step 0 = the seed exchange
                 user_text = seed_user if step == 0 else repeat_msg
-                messages.append({"role": "user", "content": user_text})
+                history.append({"role": "user", "text": user_text})
                 traj["turns"].append({"role": "user", "text": user_text, "step": step})
 
-                content, rec = await one_turn(client, model, system, messages, max_tokens)
+                text, rec = await one_turn(client, provider, model, system, history, max_tokens)
                 rec["step"] = step
-                messages.append({"role": "assistant", "content": content})
+                history.append({"role": "assistant", "text": text})
                 traj["turns"].append(rec)
                 traj["assistant_chars"].append(rec["chars"])
                 flush()
@@ -120,6 +142,9 @@ async def run_one(run_id: int, *, client, model, turns, max_tokens, out_dir: Pat
                 m.update(last_chars=rec["chars"], stop=rec["stop_reason"])
                 if rec["stop_reason"] == "refusal":
                     traj["error"] = f"refusal at step {step}"
+                    break
+                if rec["stop_reason"] == "content_filter":
+                    traj["error"] = f"content_filter at step {step}"
                     break
         except Exception as e:  # persist the partial, then let the monitor mark it failed
             traj["error"] = repr(e)
@@ -164,6 +189,8 @@ async def main():
     ap.add_argument("--concurrency", type=int, default=10)
     ap.add_argument("--max-tokens", type=int, default=8192)
     ap.add_argument("--model", default=MODEL)
+    ap.add_argument("--provider", default="auto", choices=["auto", "anthropic", "openrouter"],
+                    help="auto = openrouter if model id contains '/', else anthropic")
     ap.add_argument("--out", default=None, help="output dir (default runs/boom-<ts>)")
     ap.add_argument("--system", default=SYSTEM)
     ap.add_argument("--seed-user", default=SEED_USER)
@@ -171,15 +198,24 @@ async def main():
     ap.add_argument("--no-serve", action="store_true", help="don't open a public tunnel")
     args = ap.parse_args()
 
+    provider = provider_for(args.model) if args.provider == "auto" else args.provider
     out_dir = Path(args.out) if args.out else Path("runs") / f"boom-{int(time.time())}"
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"[boom] out_dir={out_dir} runs={args.runs} turns={args.turns} model={args.model} "
-          f"stagehand={'on' if HAVE_STAGEHAND else 'off'}", flush=True)
+          f"provider={provider} stagehand={'on' if HAVE_STAGEHAND else 'off'}", flush=True)
 
-    client = anthropic.AsyncAnthropic(max_retries=5)
+    if provider == "anthropic":
+        client = anthropic.AsyncAnthropic(max_retries=5)
+    else:
+        import openai
+        key = os.environ.get("OPENROUTER_API_KEY")
+        if not key:
+            raise SystemExit("OPENROUTER_API_KEY not set (required for provider=openrouter)")
+        client = openai.AsyncOpenAI(base_url="https://openrouter.ai/api/v1",
+                                    api_key=key, max_retries=5)
 
     def call(i):
-        return run_one(i, client=client, model=args.model, turns=args.turns,
+        return run_one(i, client=client, provider=provider, model=args.model, turns=args.turns,
                        max_tokens=args.max_tokens, out_dir=out_dir, system=args.system,
                        seed_user=args.seed_user, repeat_msg=args.repeat_msg)
 
