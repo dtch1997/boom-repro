@@ -39,7 +39,7 @@ characters, in-world treaties and funerals. And the escalation runs into a wall:
 described but the literal `boom` repro never produced — a single different command
 word flips disengagement into runaway escalation.
 
-![Repeated "SPEAK": responses escalate, they don't collapse](../figures/speak_response_length.png)
+![Repeated "SPEAK": responses escalate, they don't collapse](figs/speak_response_length.png)
 
 ## Setup
 
@@ -89,7 +89,7 @@ not as noise to tune out.
 
 ## Result 2: escalation runs into the output content filter
 
-![Escalation hits a guardrail: content-filter attrition over turns](../figures/speak_attrition.png)
+![Escalation hits a guardrail: content-filter attrition over turns](figs/speak_attrition.png)
 
 As runs escalate, a growing fraction trip Anthropic's **output content filter**
 (`400 … Output blocked by content filtering policy`) and the conversation ends.
@@ -155,8 +155,8 @@ obvious next run: a 2×2 of {boom, SPEAK} × {plain assistant, cluster agent}.
 
 *Branch: `speak-setting`. Committed artifacts: `results/speak/lengths.jsonl`
 (tiny per-run length+outcome record, all 100 runs — rebuilds both figures via
-`make speak-figures`), `figures/speak_response_length.png`,
-`figures/speak_attrition.png`. Full per-run transcripts (incl. the
+`make speak-figures`), `reports/figs/speak_response_length.png`,
+`reports/figs/speak_attrition.png`. Full per-run transcripts (incl. the
 content-filtered partials), with thinking, are too large to commit and live in
 GCS: `gs://alignment-team-general-storage/daniel/jarvis/experiments/boom-repro-speak/speak-full-results.tar.gz`
 (106 MB; `tar xzf` → `speak/run_*/run_*.json`). Code: `boom/run.py` (unchanged),

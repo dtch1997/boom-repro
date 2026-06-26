@@ -22,7 +22,7 @@ worldbuilding the anecdote described (named characters, in-world sagas) shows up
 for real — so hard that **22/100 runs trip the output content filter**. Write-up:
 [`reports/speak.md`](reports/speak.md) (`make speak && make speak-figures`).
 
-![SPEAK escalates](figures/speak_response_length.png)
+![SPEAK escalates](reports/figs/speak_response_length.png)
 
 ## Run it
 

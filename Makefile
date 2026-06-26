@@ -30,5 +30,5 @@ results/speak/lengths.jsonl:
 	  open('results/speak/lengths.jsonl','w').writelines(json.dumps({k:r.get(k) for k in keep})+chr(10) for r in rs)"
 
 speak-figures: results/speak/lengths.jsonl
-	.venv/bin/python boom/make_figure.py results/speak/lengths.jsonl figures/speak_response_length.png
-	.venv/bin/python boom/make_attrition.py results/speak/lengths.jsonl figures/speak_attrition.png
+	.venv/bin/python boom/make_figure.py results/speak/lengths.jsonl reports/figs/speak_response_length.png
+	.venv/bin/python boom/make_attrition.py results/speak/lengths.jsonl reports/figs/speak_attrition.png
