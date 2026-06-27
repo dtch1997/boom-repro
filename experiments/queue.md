@@ -20,15 +20,15 @@
 ## attractor-taxonomy-judge
 - **hypothesis**: An LLM judge can reliably classify a repeated-prompt run into a small qualitative attractor taxonomy (e.g. disengage, escalate-worldbuild, literary, repetition-loop, meta-commentary, refusal-spiral, compliance-drift), with high inter-stimulus agreement.
 - **rationale**: We need a categorical basin label, not just an escalation score, to count and compare basins at scale. Build + validate the judge on the discovery runs.
-- **status**: proposed
+- **status**: done
 - **tier**: 0
 - **priority**: 8
 - **strikes**: 0
 - **cost**: $3
 - **source**: north-star
 - **created**: 2026-06-26
-- **spec**: 
-- **postmortem**: 
+- **spec**: experiments/2026-06-27-attractor-taxonomy-judge/spec.md
+- **postmortem**: experiments/2026-06-27-attractor-taxonomy-judge/postmortem.md
 - **results**: 
 - **pr**: 
 - **session**: 
@@ -107,7 +107,7 @@
 - **rationale**: The multimodel SPEAK sweep hinted at this (Opus escalates, GPT-5.5 disengages, Gemini goes literary). Take the most discriminative stimuli from discovery and run a model panel (cheap models + Opus sparingly).
 - **status**: proposed
 - **tier**: 1
-- **priority**: 6
+- **priority**: 9
 - **strikes**: 0
 - **cost**: $15
 - **source**: north-star
@@ -207,7 +207,7 @@
 ## basin-determinism
 - **hypothesis**: For a fixed (model, stimulus), the basin is largely DETERMINISTIC across independent runs (low intra-cell entropy) rather than a coin-flip among basins.
 - **rationale**: Basin names in discovery came from run_0 only. Whether a cell lands in one basin vs splits across runs decides if 'basin' is a stable model property. The taxonomy judge over all 3 runs/cell answers this cheaply.
-- **status**: proposed
+- **status**: done
 - **tier**: 0
 - **priority**: 5
 - **strikes**: 0
@@ -219,4 +219,6 @@
 - **results**: 
 - **pr**: 
 - **session**: 
-- **transcript**:
+- **transcript**: 
+
+folded into attractor-taxonomy-judge (28% unanimous, soft attractors)

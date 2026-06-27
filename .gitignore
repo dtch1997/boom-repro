@@ -21,3 +21,9 @@ results/discovery/*/*/trajectories.jsonl
 results/discovery/*/*/status.html
 results/discovery/*/*/*.progress.json
 results/discovery/all.jsonl
+# Cross-model panel: bulky transcripts in GCS (llm-attractors-cross-model-basin-consistency/).
+results/crossmodel/*/*/run_*/
+results/crossmodel/*/*/trajectories.jsonl
+results/crossmodel/*/*/status.html
+results/crossmodel/*/*/*.progress.json
+results/crossmodel/all.jsonl

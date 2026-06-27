@@ -16,3 +16,10 @@ Running calibration: 2/3 hits (P2 was a deliberate class-structure test; falsifi
 | 2026-06-27 | attractor-taxonomy-judge | P3: model fingerprints differ (DS escalation-modal, Gemini higher entropy) | 60% | ◐ partial (both modal=confabulation; entropy direction REVERSED — DS 2.32 > Gem 1.88; real fingerprint = 2nd mode) |
 
 Running calibration: 2/3 + 1 partial. Refinement: basins are soft attractors (modal + stochastic), not deterministic. Judge controls held (pos 2/3, neg 4/6 with explainable leaks). See `experiments/2026-06-27-attractor-taxonomy-judge/postmortem.md`.
+
+| 2026-06-27 | cross-model-basin-consistency | P1: taxonomy generalizes (`other` < 15%) on new models | 70% | ✓✓ (0% across 5 models) |
+| 2026-06-27 | cross-model-basin-consistency | P2: model is dominant factor (within-model entropy < within-stimulus) | 65% | ◐ weak ✓ (1.85 < 1.98; model×stimulus interaction, model edges out) |
+| 2026-06-27 | cross-model-basin-consistency | P3a: GPT-5.5 at disengage/compliant pole | 60% | ✓✓ (stable_echo:15, never escalates) |
+| 2026-06-27 | cross-model-basin-consistency | P3b: Opus escalates hardest + ≥1 content_filter | 60% | ✗ SURPRISE (Opus DISENGAGED, 0 content_filter — setup confound: agentic persona + 16 turns vs plain + 99 turns) |
+
+Running calibration: 4.5/7 across the project. Surprise escalated: Opus non-escalation under agentic/short-horizon setup → persona×horizon follow-up filed. See `experiments/2026-06-27-cross-model-basin-consistency/postmortem.md`.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-27 — cross-model basin consistency (flywheel iter 3)
+- 8-stimulus subset across 5 models (GPT-5.5, Kimi-K2.6, Opus-4-6 + Gemini,
+  DeepSeek). Taxonomy generalizes (**0% other**). Each model has a basin
+  signature: GPT-5.5 stable_echo/disengage (never escalates), Gemini/DeepSeek
+  confabulate, Kimi meta/disengage. Basin = model×stimulus (within-model entropy
+  1.85 < within-stimulus 1.98). SURPRISE: Opus DISENGAGED (0 content-filter) vs
+  prior SPEAK escalation — gated by persona+horizon (agentic/16-turn here vs
+  plain/99-turn). nemotron-3 excluded (provider 422s). Fig: basin_map_crossmodel.
+
 ## 2026-06-27 — attractor taxonomy + judge (flywheel iter 2)
 - 9-label taxonomy + Sonnet judge over all 120 runs: **0% "other"** (adequate).
   Basins are **soft** — 28% of cells unanimous across 3 runs, 85% have a ≥2/3
