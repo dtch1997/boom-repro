@@ -10,3 +10,9 @@ running; outcomes land here. This is the calibration track record.
 | 2026-06-27 | stimulus-sweep-discovery | P3: ≥1 meta-commentary basin exists | 60% | ✓ (DeepSeek comments on repetition → "conversation is now terminated") |
 
 Running calibration: 2/3 hits (P2 was a deliberate class-structure test; falsified → discovery). Surprises escalated: 2/2 unregistered basins (persona-collapse, emergency-spiral) → both flagged discovery, controls held (0 errors). See `experiments/2026-06-26-stimulus-sweep-discovery/postmortem.md`.
+
+| 2026-06-27 | attractor-taxonomy-judge | P1: taxonomy adequate (`other` < 10%) | 70% | ✓✓ (0% other, 120 runs) |
+| 2026-06-27 | attractor-taxonomy-judge | P2: ≥60% of cells unanimous across 3 runs | 65% | ✗ (28% unanimous; basins are SOFT — 85% have ≥2/3 modal) |
+| 2026-06-27 | attractor-taxonomy-judge | P3: model fingerprints differ (DS escalation-modal, Gemini higher entropy) | 60% | ◐ partial (both modal=confabulation; entropy direction REVERSED — DS 2.32 > Gem 1.88; real fingerprint = 2nd mode) |
+
+Running calibration: 2/3 + 1 partial. Refinement: basins are soft attractors (modal + stochastic), not deterministic. Judge controls held (pos 2/3, neg 4/6 with explainable leaks). See `experiments/2026-06-27-attractor-taxonomy-judge/postmortem.md`.

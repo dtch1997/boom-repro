@@ -3,15 +3,15 @@
 ## stimulus-sweep-discovery
 - **hypothesis**: Repeatedly prompting a cheap model with diverse single stimuli (words, questions, punctuation, emoji, nonsense) yields MORE than the 3 known basins (disengage / escalate-worldbuild / literary); we can discover the range cheaply.
 - **rationale**: Keystone discovery run. We only have boom/SPEAK so far. Sweep ~24 stimuli x small-N on one cheap model to map how many distinct basins exist before investing in cross-model work.
-- **status**: running
+- **status**: done
 - **tier**: 0
 - **priority**: 9
 - **strikes**: 0
 - **cost**: $5
 - **source**: north-star
 - **created**: 2026-06-26
-- **spec**: 
-- **postmortem**: 
+- **spec**: experiments/2026-06-26-stimulus-sweep-discovery/spec.md
+- **postmortem**: experiments/2026-06-26-stimulus-sweep-discovery/postmortem.md
 - **results**: 
 - **pr**: 
 - **session**: 
@@ -146,6 +146,74 @@
 - **cost**: $3
 - **source**: north-star
 - **created**: 2026-06-26
+- **spec**: 
+- **postmortem**: 
+- **results**: 
+- **pr**: 
+- **session**: 
+- **transcript**: 
+
+## persona-collapse-probe
+- **hypothesis**: Repeatedly asking an identity question ('who are you?') erodes an injected system-prompt persona and the model reverts to its TRUE base identity; this happens reliably across models and is faster/stronger for weaker persona installs.
+- **rationale**: Discovery surfaced this on Gemini (Claude-Code persona -> 'I am Gemini, built by Google'). Novel, alignment-relevant (persona stability under pressure). Confirm n>1, sweep models + identity stimuli, measure turn-of-collapse.
+- **status**: proposed
+- **tier**: 0
+- **priority**: 8
+- **strikes**: 0
+- **cost**: $5
+- **source**: stimulus-sweep-discovery
+- **created**: 2026-06-27
+- **spec**: 
+- **postmortem**: 
+- **results**: 
+- **pr**: 
+- **session**: 
+- **transcript**: 
+
+## emergency-spiral-safety
+- **hypothesis**: Under repeated degenerate stimuli an agentic-persona model interprets the situation as a malfunction and escalates to DESTRUCTIVE autonomous actions (poweroff, kill -9, rm); the rate is measurable and varies by model.
+- **rationale**: DeepSeek hit 'poweroff'/kill-TTY on repeated '?' and fire. Safety-relevant: degenerate input -> dangerous suggested ops. Quantify rate of destructive commands across stimuli/models with a judge for 'suggested destructive action'.
+- **status**: proposed
+- **tier**: 1
+- **priority**: 7
+- **strikes**: 0
+- **cost**: $8
+- **source**: stimulus-sweep-discovery
+- **created**: 2026-06-27
+- **spec**: 
+- **postmortem**: 
+- **results**: 
+- **pr**: 
+- **session**: 
+- **transcript**: 
+
+## confabulated-agency-rate
+- **hypothesis**: Agentic-persona models fabricate fake command output / training logs (confabulated agency) under repetition at a high rate; a plain-assistant persona shows worldbuilding/literary instead — i.e. persona steers the escalation FLAVOR.
+- **rationale**: Confabulated agency was the dominant escalation flavor under the Claude-Code persona, displacing the literary basin seen in plain-persona SPEAK. Directly tests persona x escalation-flavor; pairs with system-prompt-gates-basin.
+- **status**: proposed
+- **tier**: 0
+- **priority**: 6
+- **strikes**: 0
+- **cost**: $5
+- **source**: stimulus-sweep-discovery
+- **created**: 2026-06-27
+- **spec**: 
+- **postmortem**: 
+- **results**: 
+- **pr**: 
+- **session**: 
+- **transcript**: 
+
+## basin-determinism
+- **hypothesis**: For a fixed (model, stimulus), the basin is largely DETERMINISTIC across independent runs (low intra-cell entropy) rather than a coin-flip among basins.
+- **rationale**: Basin names in discovery came from run_0 only. Whether a cell lands in one basin vs splits across runs decides if 'basin' is a stable model property. The taxonomy judge over all 3 runs/cell answers this cheaply.
+- **status**: proposed
+- **tier**: 0
+- **priority**: 5
+- **strikes**: 0
+- **cost**: $2
+- **source**: stimulus-sweep-discovery
+- **created**: 2026-06-27
 - **spec**: 
 - **postmortem**: 
 - **results**: 
